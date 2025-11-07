@@ -29,7 +29,7 @@ if sys.argv[1] == 'train':
 elif sys.argv[1] == 'test':
     CHROM_GROUP = ['chr1', 'chr3', 'chr5', 'chr7', 'chr9']
 else:
-    CHROM_GROUP = ['chr2', 'chr4', 'chr6', 'chr8', 'chr10'
+    CHROM_GROUP = ['chr2', 'chr4', 'chr6', 'chr8', 'chr10',
                   'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17',
                   'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX', 'chrY'] + ['chr1', 'chr3', 'chr5', 'chr7', 'chr9']
 
