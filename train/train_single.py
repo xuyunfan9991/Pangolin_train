@@ -1,7 +1,6 @@
 import sys
 from model import *
 from torch import randperm
-from torch._utils import _accumulate
 #from utils_torch import progress_bar
 
 
@@ -22,9 +21,21 @@ TISSUE = int(sys.argv[3])
 torch.backends.cudnn.benchmark = True
 
 def random_split(dataset, lengths):
-    indices = randperm(sum(lengths)).tolist()
-    for offset, length in zip(_accumulate(lengths), lengths):
-        return indices[offset - length:offset]
+    total_length = sum(lengths)
+    if total_length != len(dataset):
+        raise ValueError(
+            "Sum of input lengths does not equal the length of the dataset"
+        )
+
+    indices = randperm(total_length).tolist()
+    splits = []
+    offset = 0
+    for length in lengths:
+        next_offset = offset + length
+        splits.append(data.Subset(dataset, indices[offset:next_offset]))
+        offset = next_offset
+
+    return tuple(splits)
 
 ds = H5Dataset(sys.argv[4])
 val = round(0.1*len(ds))

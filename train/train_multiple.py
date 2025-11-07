@@ -1,7 +1,6 @@
 import sys
 from model import *
 from torch import randperm
-from torch._utils import _accumulate
 from utils_torch import progress_bar
 
 assert torch.cuda.is_available()
@@ -13,9 +12,21 @@ model_num = int(sys.argv[1])
 torch.backends.cudnn.benchmark = True
 
 def random_split(dataset, lengths):
-    indices = randperm(sum(lengths)).tolist()
-    for offset, length in zip(_accumulate(lengths), lengths):
-        return indices[offset - length:offset]
+    total_length = sum(lengths)
+    if total_length != len(dataset):
+        raise ValueError(
+            "Sum of input lengths does not equal the length of the dataset"
+        )
+
+    indices = randperm(total_length).tolist()
+    splits = []
+    offset = 0
+    for length in lengths:
+        next_offset = offset + length
+        splits.append(data.Subset(dataset, indices[offset:next_offset]))
+        offset = next_offset
+
+    return tuple(splits)
 
 ds = H5Dataset(sys.argv[2])
 val = round(0.1*len(ds))
@@ -54,13 +65,15 @@ def train(epoch):
     print('\nEpoch: %d' % epoch, flush=True)
     model.train()
     train_loss = 0
-    
+    num_batches = 0
+
     for batch_idx, (inputs, targets) in enumerate(train_dl):
         inputs, targets = inputs.cuda(), targets.cuda()
         outputs = model(inputs)
         loss = criterion(outputs, targets)
         train_loss += float(loss)
-        
+        num_batches = batch_idx + 1
+
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -70,11 +83,12 @@ def train(epoch):
         progress_bar(batch_idx, len(train_dl),
                      'Loss: %.5f' % (train_loss/(batch_idx+1)))
 
-    return train_loss/batch_idx
+    return train_loss / max(1, num_batches)
 
 def test():
     model.eval()
     test_loss = 0
+    num_batches = 0
 
     for batch_idx, (inputs, targets) in enumerate(val_dl):
         inputs, targets = inputs.cuda(), targets.cuda()
@@ -82,12 +96,13 @@ def test():
             outputs = model(inputs)
             loss = criterion(outputs, targets)
         test_loss += float(loss)
-        
+        num_batches = batch_idx + 1
+
         #print(batch_idx, len(val_dl), 'Loss: %.5f' % (test_loss/(batch_idx+1)), flush=True)
         progress_bar(batch_idx, len(val_dl),
                      'Loss: %.5f' % (test_loss/(batch_idx+1)))
 
-    return test_loss/batch_idx
+    return test_loss / max(1, num_batches)
 
 criterion = loss
 optimizer = torch.optim.AdamW(model.parameters(), lr=5e-4)
