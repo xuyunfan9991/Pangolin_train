@@ -61,6 +61,6 @@ if spliceai:
 else:
     all_outputs = np.split(all_outputs, [2,3,5,6,8,9,11], axis=1)
     print_metrics(all_targets[0], all_outputs[0])
-    print_metrics(all_targets[2], all_outputs[0])
-    print_metrics(all_targets[4], all_outputs[0])
-    print_metrics(all_targets[6], all_outputs[0])
+    print_metrics(all_targets[2], all_outputs[2])
+    print_metrics(all_targets[4], all_outputs[4])
+    print_metrics(all_targets[6], all_outputs[6])
