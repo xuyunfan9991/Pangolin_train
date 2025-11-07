@@ -18,6 +18,8 @@ if spliceai:
     SpliceAI = []
     for i in range(1,6):
         SpliceAI.append(load_model('../SpliceAI/spliceai/models/spliceai' + str(i) + '.h5'))
+    if not SpliceAI:
+        raise ValueError("At least one SpliceAI model must be provided")
 else:
     weights = [sys.argv[1]]
 
@@ -28,13 +30,15 @@ else:
         model.load_state_dict(torch.load(weights[i]), strict=True)
         model.eval()
         models.append(model)
+    if not models:
+        raise ValueError("At least one Pangolin model must be provided")
 
 ds = H5Dataset(sys.argv[2])
 dl = data.DataLoader(ds, batch_size=1)
 
-spliceai_outputs = np.empty([len(dl),3,5000], dtype=np.float16)
-all_targets = np.empty([len(dl),12,5000], dtype=np.float16)
-all_outputs = np.empty([len(dl),12,5000], dtype=np.float16) 
+spliceai_outputs = np.zeros([len(dl), 3, 5000], dtype=np.float32)
+all_targets = np.zeros([len(dl), 12, 5000], dtype=np.float32)
+all_outputs = np.zeros([len(dl), 12, 5000], dtype=np.float32)
 
 for batch_idx, (inputs, targets) in enumerate(dl):
     if batch_idx % 1000 == 0:
@@ -51,6 +55,11 @@ for batch_idx, (inputs, targets) in enumerate(dl):
         all_targets[batch_idx:batch_idx+1,:,:] = targets.numpy()
         for model in models:
             all_outputs[batch_idx:batch_idx+1,:,:] += model(inputs).cpu().detach().numpy()
+
+if spliceai:
+    spliceai_outputs /= len(SpliceAI)
+else:
+    all_outputs /= len(models)
 
 all_targets = np.split(all_targets, [2,3,5,6,8,9,11], axis=1)
 if spliceai:
