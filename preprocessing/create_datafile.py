@@ -23,7 +23,7 @@ sequence = 'canonical_sequence_%s.txt' % sys.argv[4]
 data_dir='./'
 
 if sys.argv[1] == 'train':
-    CHROM_GROUP = ['chr2', 'chr4', 'chr6', 'chr8', 'chr10'
+    CHROM_GROUP = ['chr2', 'chr4', 'chr6', 'chr8', 'chr10',
                   'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17',
                   'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX', 'chrY']
 elif sys.argv[1] == 'test':
